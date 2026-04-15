@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GitHub Deployment Guide — Āyurveda Wellness</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --parchment: #f5ede0;
+      --terracotta: #c4602a;
+      --terra-light: #e07a4a;
+      --saffron: #e8a030;
+      --forest: #2d5a3d;
+      --ink: #2a1f14;
+      --ink-soft: #5a4535;
+      --white-warm: #fdfaf6;
+      --vata: #7a9cbe;
+      --pitta: #d4622a;
+      --kapha: #4a8060;
+      --shadow: rgba(80,40,10,0.10);
+      --font-display: 'Cormorant Garamond', Georgia, serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'DM Mono', 'Courier New', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--parchment);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    /* ── Background ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 10% 5%,  rgba(196,96,42,.07) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 90% 90%, rgba(74,128,96,.08) 0%, transparent 50%);
+    }
+
+    /* ── Layout ── */
+    .page {
+      position: relative; z-index: 1;
+      max-width: 860px; margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    /* ── Header ── */
+    .hero {
+      text-align: center;
+      padding: 48px 24px 40px;
+      border-bottom: 1px solid rgba(196,96,42,.15);
+      margin-bottom: 48px;
+    }
+    .hero-symbol { font-size: 1.3rem; letter-spacing: .4em; color: var(--saffron); margin-bottom: 14px; }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 600; color: var(--terracotta);
+      margin-bottom: 8px;
+    }
+    .hero-sub { font-size: .95rem; color: var(--ink-soft); margin-bottom: 20px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(45,90,61,.1); color: var(--forest);
+      border: 1px solid rgba(45,90,61,.2); border-radius: 24px;
+      padding: 6px 18px; font-size: .82rem; font-weight: 500;
+    }
+
+    /* ── Section heading ── */
+    h2 {
+      font-family: var(--font-display);
+      font-size: 1.7rem; font-weight: 600; color: var(--terracotta);
+      margin-bottom: 20px; padding-bottom: 8px;
+      border-bottom: 2px solid rgba(196,96,42,.15);
+    }
+
+    /* ── Step cards ── */
+    .steps { display: flex; flex-direction: column; gap: 0; margin-bottom: 48px; }
+
+    .step {
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      gap: 0 24px;
+      position: relative;
+    }
+
+    /* Connector line between steps */
+    .step:not(:last-child) .step-number::after {
+      content: '';
+      position: absolute;
+      left: 31px; top: 64px;
+      width: 2px; height: calc(100% - 20px);
+      background: linear-gradient(to bottom, rgba(196,96,42,.3), rgba(196,96,42,.05));
+    }
+
+    .step-left { position: relative; display: flex; flex-direction: column; align-items: center; padding-top: 4px; }
+
+    .step-number {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--terracotta), var(--terra-light));
+      color: #fff; font-weight: 600; font-size: 1.1rem;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 14px rgba(196,96,42,.30);
+      flex-shrink: 0; position: relative; z-index: 1;
+    }
+
+    .step-body {
+      background: var(--white-warm);
+      border: 1px solid rgba(196,96,42,.12);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 12px var(--shadow);
+    }
+
+    .step-title {
+      font-size: 1.05rem; font-weight: 600; color: var(--ink);
+      margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+    }
+    .step-title .icon { font-size: 1.2rem; }
+
+    .step-body p { font-size: .9rem; color: var(--ink-soft); line-height: 1.65; margin-bottom: 10px; }
+    .step-body p:last-child { margin-bottom: 0; }
+
+    /* ── Code blocks ── */
+    .code {
+      background: #1e1410;
+      color: #f5ede0;
+      border-radius: 10px;
+      padding: 16px 18px;
+      font-family: var(--font-mono);
+      font-size: .82rem;
+      line-height: 1.7;
+      margin: 10px 0;
+      overflow-x: auto;
+      position: relative;
+    }
+    .code .comment { color: #8a7060; }
+    .code .cmd     { color: #e8a030; }
+    .code .url     { color: #7a9cbe; text-decoration: underline; }
+    .code .string  { color: #4a8060; }
+
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      background: rgba(255,255,255,.1); color: #f5ede0;
+      border: 1px solid rgba(255,255,255,.15); border-radius: 6px;
+      font-family: var(--font-body); font-size: .72rem;
+      padding: 3px 10px; cursor: pointer; transition: background .2s;
+    }
+    .copy-btn:hover { background: rgba(255,255,255,.2); }
+
+    /* ── Tips / info boxes ── */
+    .tip {
+      background: rgba(232,160,48,.08);
+      border: 1px solid rgba(232,160,48,.25);
+      border-left: 3px solid var(--saffron);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: .87rem;
+      color: var(--ink-soft);
+      margin: 10px 0;
+      line-height: 1.6;
+    }
+    .tip strong { color: var(--ink); }
+
+    .success-box {
+      background: rgba(45,90,61,.08);
+      border: 1px solid rgba(45,90,61,.2);
+      border-left: 3px solid var(--forest);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: .87rem;
+      color: var(--ink-soft);
+      margin: 10px 0;
+      line-height: 1.6;
+    }
+
+    /* ── Screenshot placeholder ── */
+    .screenshot {
+      background: linear-gradient(135deg, #f0e8da, #e8ddd0);
+      border: 1px solid rgba(196,96,42,.15);
+      border-radius: 10px;
+      padding: 20px;
+      margin: 12px 0;
+      text-align: center;
+      font-size: .82rem;
+      color: var(--ink-soft);
+    }
+    .screenshot .screen-inner {
+      background: #fff;
+      border-radius: 6px;
+      padding: 14px 20px;
+      border: 1px solid rgba(196,96,42,.1);
+      text-align: left;
+      font-family: var(--font-mono);
+      font-size: .78rem;
+      color: #333;
+      line-height: 1.8;
+    }
+    .screen-nav {
+      display: flex; gap: 6px; margin-bottom: 10px;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot.r { background: #ff5f57; }
+    .dot.y { background: #ffbd2e; }
+    .dot.g { background: #28ca41; }
+    .screen-path { color: #888; font-size: .72rem; margin-bottom: 8px; }
+    .screen-line { display: flex; gap: 12px; }
+    .screen-line .label { color: #666; min-width: 80px; }
+    .screen-line .val   { color: #2d5a3d; font-weight: 500; }
+    .screen-line .val.orange { color: #c4602a; }
+
+    /* ── File tree ── */
+    .filetree {
+      background: #1e1410; color: #f5ede0;
+      border-radius: 10px; padding: 16px 20px;
+      font-family: var(--font-mono); font-size: .82rem;
+      line-height: 1.9; margin: 10px 0;
+    }
+    .ft-dir  { color: var(--saffron); }
+    .ft-file { color: #b8d4c8; }
+    .ft-desc { color: #6a5a4a; font-size: .75rem; margin-left: 8px; }
+    .ft-key  { color: #e07a4a; }
+
+    /* ── Separator ── */
+    .sep {
+      text-align: center; color: var(--saffron);
+      font-size: 1.1rem; letter-spacing: .4em;
+      margin: 48px 0 40px; opacity: .7;
+    }
+
+    /* ── URL display ── */
+    .url-display {
+      background: var(--white-warm);
+      border: 2px solid rgba(196,96,42,.25);
+      border-radius: 12px;
+      padding: 18px 22px;
+      display: flex; align-items: center; gap: 14px;
+      margin: 14px 0;
+      box-shadow: 0 3px 12px var(--shadow);
+    }
+    .url-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .url-text { font-family: var(--font-mono); font-size: .92rem; color: var(--vata); font-weight: 500; }
+    .url-label { font-size: .75rem; color: var(--ink-soft); }
+
+    /* ── Checklist ── */
+    .checklist { list-style: none; display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+    .checklist li {
+      display: flex; gap: 10px; align-items: flex-start;
+      font-size: .9rem; color: var(--ink-soft); line-height: 1.5;
+    }
+    .checklist li::before {
+      content: '✓'; color: var(--forest); font-weight: 700; flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      border-top: 1px solid rgba(196,96,42,.12);
+      padding-top: 32px; margin-top: 60px;
+      color: var(--ink-soft); font-size: .85rem;
+      line-height: 1.8;
+    }
+    .footer .symbol { font-size: 1.2rem; letter-spacing: .3em; color: var(--saffron); }
+
+    @media(max-width: 600px) {
+      .step { grid-template-columns: 48px 1fr; gap: 0 14px; }
+      .step-number { width: 38px; height: 38px; font-size: .95rem; }
+      .step:not(:last-child) .step-number::after { left: 23px; top: 52px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-symbol">☽ ✦ ☾</div>
+    <h1 class="hero-title">Deploy to GitHub Pages</h1>
+    <p class="hero-sub">Go from files on your computer to a live public URL in under 5 minutes</p>
+    <div class="hero-badge">🌐 Free hosting · Custom URL · Auto-deploys on every push</div>
+  </div>
+
+  <!-- PART 1: First-time setup -->
+  <h2>Part 1 — One-Time Setup</h2>
+  <div class="steps">
+
+    <!-- Step 1 -->
+    <div class="step">
+      <div class="step-left">
+        <div class="step-number">1</div>
+      </div>
+      <div class="step-body">
+        <div class="step-title"><span class="icon">📁</span> Create a GitHub repository</div>
+        <p>Sign in to <strong>github.com</strong>. Click the <strong>+</strong> icon (top right) → <strong>New repository</strong>.</p>
+        <p>Fill in the form:</p>
+        <div class="screenshot">
+          <div class="screen-inner">
+            <div class="screen-nav"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+            <div class="screen-path">github.com / new</div>
+            <div class="screen-line"><span class="label">Repository name:</span><span class="val">ayurveda-wellness</span></div>
+            <div class="screen-line"><span class="label">Visibility:</span><span class="val">⦿ Public</span></div>
+            <div class="screen-line"><span class="label">Initialize:</span><span class="val orange">☐ Leave unchecked (we'll push files manually)</span></div>
+          </div>
+        </div>
+        <p>Click <strong>Create repository</strong>. Copy the repo URL — you'll need it in Step 3.</p>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step">
+      <div class="step-left">
+        <div class="step-number">2</div>
+      </div>
+      <div class="step-body">
+        <div class="step-title"><span class="icon">⚙️</span> Enable GitHub Pages</div>
+        <p>In your new (empty) repo, go to <strong>Settings → Pages</strong>.</p>
+        <p>Under <strong>Build and deployment → Source</strong>, choose:</p>
+        <div class="screenshot">
+          <div class="screen-inner">
+            <div class="screen-nav"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+            <div class="screen-path">Settings → Pages</div>
+            <div class="screen-line"><span class="label">Source:</span><span class="val">⦿ GitHub Actions</span></div>
+          </div>
+        </div>
+        <p>Click <strong>Save</strong>. This tells GitHub to use our workflow file to deploy automatically.</p>
+        <div class="tip"><strong>Why GitHub Actions?</strong> It lets us control exactly what gets deployed and auto-deploys every time you push a change — no manual steps needed after setup.</div>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step">
+      <div class="step-left">
+        <div class="step-number">3</div>
+      </div>
+      <div class="step-body">
+        <div class="step-title"><span class="icon">💻</span> Install Git (if you don't have it)</div>
+        <p>Check if Git is installed:</p>
+        <div class="code" style="position:relative">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <span class="cmd">git --version</span>
+        </div>
+        <p>If not installed, download from <span style="color:var(--vata);font-family:var(--font-mono)">git-scm.com</span> and install with default settings.</p>
+        <p>Then configure your identity (one-time setup):</p>
+        <div class="code" style="position:relative">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <span class="comment"># Replace with your real name and GitHub email</span><br>
+          <span class="cmd">git config --global user.name  <span class="string">"Your Name"</span></span><br>
+          <span class="cmd">git config --global user.email <span class="string">"you@example.com"</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step">
+      <div class="step-left">
+        <div class="step-number">4</div>
+      </div>
+      <div class="step-body">
+        <div class="step-title"><span class="icon">📂</span> Prepare your project folder</div>
+        <p>Download the project ZIP from Claude (or locate the files you already have). Your folder should look like this:</p>
+        <div class="filetree">
+<span class="ft-dir">ayurveda-wellness/</span><br>
+├── <span class="ft-file">index.html</span>         <span class="ft-desc">← The entire app</span><br>
+├── <span class="ft-key">.github/</span><br>
+│   └── <span class="ft-key">workflows/</span><br>
+│       └── <span class="ft-file">deploy.yml</span>  <span class="ft-desc">← Auto-deploy workflow</span><br>
+├── <span class="ft-file">README.md</span>           <span class="ft-desc">← Shown on GitHub</span><br>
+├── <span class="ft-file">LICENSE</span>             <span class="ft-desc">← MIT license</span><br>
+└── <span class="ft-file">.gitignore</span>          <span class="ft-desc">← Files to ignore</span>
+        </div>
+        <div class="tip"><strong>Important:</strong> The <code style="font-family:var(--font-mono);background:rgba(0,0,0,.06);padding:1px 5px;border-radius:4px">.github/workflows/deploy.yml</code> file is what makes auto-deploy work. Don't rename or move it.</div>
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step">
+      <div class="step-left">
+        <div class="step-number">5</div>
+      </div>
+      <div class="step-body">
+        <div class="step-title"><span class="icon">🚀</span> Push files to GitHub</div>
+        <p>Open Terminal (Mac/Linux) or Command Prompt / PowerShell (Windows). Navigate to your project folder, then run:</p>
+        <div class="code" style="position:relative">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <span class="comment"># 1. Go into the project folder</span><br>
+          <span class="cmd">cd ayurveda-wellness</span><br><br>
+          <span class="comment"># 2. Initialize git</span><br>
+          <span class="cmd">git init</span><br><br>
+          <span class="comment"># 3. Connect to your GitHub repo (paste YOUR repo URL)</span><br>
+          <span class="cmd">git remote add origin <span class="url">https://github.com/YOUR-USERNAME/ayurveda-wellness.git</span></span><br><br>
+          <span class="comment"># 4. Stage all files</span><br>
+          <span class="cmd">git add .</span><br><br>
+          <span class="comment"># 5. Create first commit</span><br>
+          <span class="cmd">git commit -m <span class="string">"🌿 Initial deployment of Ayurveda Wellness Chatbot"</span></span><br><br>
+          <span class="comment"># 6. Push to GitHub (triggers auto-deploy!)</span><br>
+          <span class="cmd">git branch -M main</span><br>
+          <span class="cmd">git push -u origin main</span>
+        </div>
+        <div class="success-box">✅ <strong>After this push, GitHub Actions automatically builds and deploys your app.</strong> You don't need to do anything else.</div>
+      </div>
+    </div>
+
+    <!-- Step 6 -->
+    <div class="step">
+      <div class="step-left">
+        <div class="step-number">6</div>
+      </div>
+      <div class="step-body">
+        <div class="step-title"><span class="icon">⏳</span> Wait ~60 seconds, then visit your live URL</div>
+        <p>Go to your repo on GitHub → click the <strong>Actions</strong> tab. You'll see a workflow run in progress (yellow spinner). Once it turns green ✅, your app is live.</p>
+        <p>Your permanent URL is:</p>
+        <div class="url-display">
+          <div class="url-icon">🌐</div>
+          <div>
+            <div class="url-label">Your live app URL</div>
+            <div class="url-text">https://YOUR-USERNAME.github.io/ayurveda-wellness/</div>
+          </div>
+        </div>
+        <p>Replace <code style="font-family:var(--font-mono);background:rgba(0,0,0,.06);padding:1px 5px;border-radius:4px">YOUR-USERNAME</code> with your actual GitHub username.</p>
+        <div class="tip"><strong>First deployment takes ~60 seconds.</strong> After that, every push deploys in under 30 seconds.</div>
+      </div>
+    </div>
+
+  </div><!-- /steps -->
+
+  <div class="sep">· · ·</div>
+
+  <!-- PART 2: Making updates -->
+  <h2>Part 2 — Making Updates Later</h2>
+  <div class="steps">
+
+    <div class="step">
+      <div class="step-left">
+        <div class="step-number" style="background:linear-gradient(135deg,var(--forest),var(--kapha))">✎</div>
+      </div>
+      <div class="step-body">
+        <div class="step-title"><span class="icon">✏️</span> Edit → Push → Done</div>
+        <p>Whenever you want to update the app (change content, colors, add questions), just edit <code style="font-family:var(--font-mono);background:rgba(0,0,0,.06);padding:1px 5px;border-radius:4px">index.html</code> in any text editor, then:</p>
+        <div class="code" style="position:relative">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <span class="comment"># Run these 3 commands from your project folder</span><br>
+          <span class="cmd">git add .</span><br>
+          <span class="cmd">git commit -m <span class="string">"Update: describe what you changed"</span></span><br>
+          <span class="cmd">git push</span>
+        </div>
+        <p>GitHub Actions picks it up automatically and your live site updates within ~30 seconds. No manual deploy step needed — ever.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="sep">· · ·</div>
+
+  <!-- PART 3: Optional extras -->
+  <h2>Part 3 — Optional Extras</h2>
+
+  <div class="step-body" style="margin-bottom:20px">
+    <div class="step-title"><span class="icon">🔗</span> Custom Domain (e.g. ayurveda.yourdomain.com)</div>
+    <ul class="checklist">
+      <li>Go to Settings → Pages → Custom domain → enter your domain</li>
+      <li>Add a CNAME DNS record at your domain registrar pointing to <code style="font-family:var(--font-mono)">YOUR-USERNAME.github.io</code></li>
+      <li>Check "Enforce HTTPS" after the DNS propagates (~10 min)</li>
+    </ul>
+  </div>
+
+  <div class="step-body" style="margin-bottom:20px">
+    <div class="step-title"><span class="icon">🔒</span> Update README badges</div>
+    <p style="font-size:.9rem;color:var(--ink-soft);margin-top:8px;line-height:1.6">Open <code style="font-family:var(--font-mono);background:rgba(0,0,0,.06);padding:1px 5px;border-radius:4px">README.md</code> and replace every <code style="font-family:var(--font-mono);background:rgba(0,0,0,.06);padding:1px 5px;border-radius:4px">YOUR-USERNAME</code> with your real GitHub username. This makes the "Live Demo" badge and deploy badge link to the right URLs.</p>
+  </div>
+
+  <div class="step-body" style="margin-bottom:20px">
+    <div class="step-title"><span class="icon">🌟</span> Star your own repo</div>
+    <p style="font-size:.9rem;color:var(--ink-soft);margin-top:8px;line-height:1.6">GitHub shows stars on repo pages — and it's a nice way to bookmark it. Hit the ⭐ Star button on your repo page!</p>
+  </div>
+
+  <div class="sep">· · ·</div>
+
+  <!-- Troubleshooting -->
+  <h2>Troubleshooting</h2>
+
+  <div class="step-body" style="margin-bottom:16px">
+    <div class="step-title">❌ "Permission denied" on git push</div>
+    <p style="font-size:.9rem;color:var(--ink-soft);margin-top:6px;line-height:1.6">GitHub no longer accepts passwords for pushes. Use a <strong>Personal Access Token</strong>: go to <strong>GitHub → Settings → Developer Settings → Personal access tokens → Generate new token</strong>. Check <strong>repo</strong> scope. Use this token as your password when prompted.</p>
+  </div>
+
+  <div class="step-body" style="margin-bottom:16px">
+    <div class="step-title">❌ Action fails with "pages not enabled"</div>
+    <p style="font-size:.9rem;color:var(--ink-soft);margin-top:6px;line-height:1.6">Go back to <strong>Settings → Pages → Source</strong> and confirm it's set to <strong>GitHub Actions</strong> (not "Deploy from branch"). Save and re-run the workflow from the Actions tab.</p>
+  </div>
+
+  <div class="step-body" style="margin-bottom:16px">
+    <div class="step-title">❌ Site shows 404 after deploy</div>
+    <p style="font-size:.9rem;color:var(--ink-soft);margin-top:6px;line-height:1.6">Ensure the file is named exactly <strong>index.html</strong> (lowercase). GitHub Pages serves <code style="font-family:var(--font-mono)">index.html</code> automatically for the root URL. Wait another 60 seconds and hard-refresh (Ctrl+Shift+R).</p>
+  </div>
+
+  <div class="step-body" style="margin-bottom:16px">
+    <div class="step-title">❌ Yellow spinner never goes green</div>
+    <p style="font-size:.9rem;color:var(--ink-soft);margin-top:6px;line-height:1.6">Click the workflow run in the Actions tab to see the error log. The most common issues are: wrong branch name (must be <code style="font-family:var(--font-mono)">main</code>) or <code style="font-family:var(--font-mono)">deploy.yml</code> is in the wrong folder (must be <code style="font-family:var(--font-mono)">.github/workflows/deploy.yml</code>).</p>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="symbol">☽ ✦ ☾</div>
+    <p style="margin-top:12px"><strong>Āyurveda Wellness Chatbot</strong></p>
+    <p>Free · Open Source · Zero Dependencies · GitHub Pages</p>
+    <p style="margin-top:8px;font-style:italic;opacity:.75">May your path to wellness be guided by wisdom 🙏</p>
+  </div>
+
+</div>
+
+<script>
+function copyCode(btn) {
+  const block = btn.parentElement;
+  // Grab all text content except the button
+  const lines = [];
+  block.childNodes.forEach(node => {
+    if (node === btn) return;
+    lines.push(node.textContent || '');
+  });
+  const text = lines.join('').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Āyurveda Wellness — Prakriti Assessment</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --parchment:   #f5ede0;
+      --parchment-dk:#ede0cc;
+      --terracotta:  #c4602a;
+      --terra-light: #e07a4a;
+      --saffron:     #e8a030;
+      --forest:      #2d5a3d;
+      --forest-light:#4a8060;
+      --ink:         #2a1f14;
+      --ink-soft:    #5a4535;
+      --white-warm:  #fdfaf6;
+      --vata-color:  #7a9cbe;
+      --pitta-color: #d4622a;
+      --kapha-color: #4a8060;
+      --shadow:      rgba(80,40,10,0.12);
+      --radius:      18px;
+      --font-display:'Cormorant Garamond', Georgia, serif;
+      --font-body:   'DM Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+      font-family: var(--font-body);
+      background: var(--parchment);
+      color: var(--ink);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background */
+    .bg-layer { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+    .bg-layer::before {
+      content:''; position:absolute; inset:0;
+      background:
+        radial-gradient(ellipse 80% 60% at 15% 10%, rgba(196,96,42,.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 85% 80%, rgba(74,128,96,.10) 0%, transparent 55%),
+        radial-gradient(ellipse 70% 40% at 50% 50%, rgba(232,160,48,.05) 0%, transparent 60%);
+    }
+    .grain {
+      position:absolute; inset:0; opacity:.035;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size:200px 200px;
+    }
+    .mandala { position:absolute; border-radius:50%; border:1px solid rgba(196,96,42,.10); }
+    .mandala::before,.mandala::after { content:''; position:absolute; border-radius:50%; border:1px solid rgba(196,96,42,.06); inset:12px; }
+    .mandala::after { inset:28px; }
+    .m1 { width:380px; height:380px; top:-120px; left:-100px; }
+    .m2 { width:280px; height:280px; bottom:-80px; right:-60px; }
+
+    /* App */
+    .app-wrapper {
+      position:relative; z-index:1;
+      max-width:700px; margin:0 auto;
+      padding:24px 16px 32px;
+      display:flex; flex-direction:column; min-height:100vh;
+    }
+
+    /* Header */
+    .app-header { text-align:center; padding:28px 16px 16px; animation:fadeDown .7s ease both; }
+    .header-symbol { font-size:1.1rem; letter-spacing:.3em; color:var(--saffron); margin-bottom:8px; opacity:.85; }
+    .app-title { font-family:var(--font-display); font-size:clamp(2rem,6vw,3rem); font-weight:300; color:var(--ink); }
+    .app-title em { font-style:italic; color:var(--terracotta); }
+    .app-subtitle { margin-top:8px; font-size:.88rem; font-weight:300; color:var(--ink-soft); letter-spacing:.04em; }
+    .free-badge {
+      display:inline-block; margin-top:10px;
+      background:rgba(74,128,96,.12); color:var(--forest);
+      border:1px solid rgba(74,128,96,.25); border-radius:20px;
+      font-size:.72rem; font-weight:500; letter-spacing:.08em;
+      padding:3px 12px;
+    }
+
+    /* Dosha legend */
+    .dosha-legend { display:flex; justify-content:center; align-items:center; gap:12px; margin:12px 0 20px; animation:fadeDown .8s .1s ease both; }
+    .dosha-badge { font-size:.78rem; font-weight:500; letter-spacing:.06em; padding:4px 12px; border-radius:20px; border:1px solid currentColor; opacity:.75; }
+    .dosha-badge.vata  { color:var(--vata-color);  background:rgba(122,156,190,.08); }
+    .dosha-badge.pitta { color:var(--pitta-color); background:rgba(212,98,42,.08);  }
+    .dosha-badge.kapha { color:var(--kapha-color); background:rgba(74,128,96,.08);  }
+    .dosha-divider { color:var(--parchment-dk); font-size:1.2rem; }
+
+    /* Chat window */
+    .chat-window {
+      flex:1; background:var(--white-warm); border-radius:var(--radius);
+      padding:24px 20px 16px;
+      box-shadow:0 2px 0 rgba(255,255,255,.9) inset, 0 8px 32px var(--shadow), 0 1px 0 rgba(196,96,42,.15);
+      border:1px solid rgba(196,96,42,.12);
+      overflow-y:auto; max-height:62vh; min-height:300px;
+      display:flex; flex-direction:column; gap:14px;
+      animation:fadeUp .7s .2s ease both;
+    }
+    .chat-window::-webkit-scrollbar { width:5px; }
+    .chat-window::-webkit-scrollbar-thumb { background:rgba(196,96,42,.2); border-radius:10px; }
+
+    /* Messages */
+    .message { display:flex; gap:10px; animation:popIn .35s cubic-bezier(0.34,1.56,0.64,1) both; }
+    .message.bot { align-items:flex-start; }
+    .bot-avatar {
+      flex-shrink:0; width:34px; height:34px; border-radius:50%;
+      background:linear-gradient(135deg, var(--forest), var(--forest-light));
+      display:flex; align-items:center; justify-content:center;
+      font-size:1rem; box-shadow:0 2px 8px rgba(45,90,61,.25); margin-top:2px;
+    }
+    .bubble { max-width:82%; padding:12px 16px; border-radius:var(--radius); line-height:1.6; font-size:.91rem; }
+    .message.bot .bubble {
+      background:var(--parchment); color:var(--ink);
+      border:1px solid rgba(196,96,42,.12); border-bottom-left-radius:4px;
+      box-shadow:0 2px 8px var(--shadow);
+    }
+    .message.user { flex-direction:row-reverse; }
+    .message.user .bubble {
+      background:linear-gradient(135deg, var(--terracotta), var(--terra-light));
+      color:#fff; border-bottom-right-radius:4px;
+      box-shadow:0 3px 12px rgba(196,96,42,.30);
+    }
+
+    /* Typing */
+    .typing-indicator { display:flex; gap:5px; align-items:center; padding:10px 14px; }
+    .typing-dot { width:7px; height:7px; background:var(--terracotta); border-radius:50%; opacity:.6; animation:typingBounce 1.2s infinite ease-in-out; }
+    .typing-dot:nth-child(2) { animation-delay:.2s; }
+    .typing-dot:nth-child(3) { animation-delay:.4s; }
+
+    /* Result card */
+    .result-card { border-radius:12px; overflow:hidden; }
+    .result-header { padding:16px 20px 12px; text-align:center; border-bottom:1px solid rgba(196,96,42,.12); }
+    .dosha-name { font-family:var(--font-display); font-size:2.2rem; font-weight:600; }
+    .dosha-name.vata  { color:var(--vata-color);  }
+    .dosha-name.pitta { color:var(--pitta-color); }
+    .dosha-name.kapha { color:var(--kapha-color); }
+    .dosha-tagline { font-size:.82rem; color:var(--ink-soft); margin-top:4px; letter-spacing:.05em; }
+    .score-bars { padding:14px 20px; border-bottom:1px solid rgba(196,96,42,.10); display:flex; flex-direction:column; gap:8px; }
+    .score-row { display:flex; align-items:center; gap:10px; font-size:.8rem; }
+    .score-label { width:46px; font-weight:500; color:var(--ink-soft); }
+    .score-track { flex:1; height:7px; background:rgba(0,0,0,.06); border-radius:10px; overflow:hidden; }
+    .score-fill { height:100%; border-radius:10px; transition:width 1.2s cubic-bezier(0.16,1,0.3,1); }
+    .score-fill.vata  { background:var(--vata-color); }
+    .score-fill.pitta { background:var(--pitta-color); }
+    .score-fill.kapha { background:var(--kapha-color); }
+    .score-pct { width:28px; text-align:right; font-size:.75rem; color:var(--ink-soft); }
+    .rec-section { padding:14px 20px; border-bottom:1px solid rgba(196,96,42,.08); }
+    .rec-section:last-child { border-bottom:none; }
+    .rec-title { font-family:var(--font-display); font-size:1.05rem; font-weight:600; color:var(--terracotta); margin-bottom:8px; }
+    .rec-list { list-style:none; display:flex; flex-direction:column; gap:5px; }
+    .rec-list li { font-size:.83rem; color:var(--ink-soft); padding-left:16px; position:relative; line-height:1.5; }
+    .rec-list li::before { content:'›'; position:absolute; left:0; color:var(--saffron); font-weight:bold; }
+    .food-cols { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px; }
+    .food-col-title { font-size:.75rem; font-weight:500; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:5px; }
+    .food-col-title.eat   { color:var(--forest); }
+    .food-col-title.avoid { color:var(--terracotta); }
+
+    /* Follow-up Q&A */
+    .faq-section { padding:14px 20px; border-top:1px solid rgba(196,96,42,.08); }
+    .faq-title { font-family:var(--font-display); font-size:1.05rem; font-weight:600; color:var(--terracotta); margin-bottom:10px; }
+    .faq-grid { display:flex; flex-direction:column; gap:10px; }
+    .faq-item { background:rgba(196,96,42,.04); border:1px solid rgba(196,96,42,.10); border-radius:10px; overflow:hidden; }
+    .faq-q {
+      padding:10px 14px; font-size:.84rem; font-weight:500; color:var(--ink);
+      cursor:pointer; display:flex; justify-content:space-between; align-items:center;
+      user-select:none; transition:background .2s;
+    }
+    .faq-q:hover { background:rgba(196,96,42,.07); }
+    .faq-arrow { font-size:.7rem; transition:transform .2s; color:var(--terracotta); }
+    .faq-a { font-size:.82rem; color:var(--ink-soft); line-height:1.6; padding:0 14px; max-height:0; overflow:hidden; transition:max-height .35s ease, padding .2s; }
+    .faq-item.open .faq-a { max-height:600px; padding:0 14px 12px; }
+    .faq-item.open .faq-arrow { transform:rotate(180deg); }
+
+    /* Input area */
+    .input-area { margin-top:14px; animation:fadeUp .7s .3s ease both; }
+    .quick-replies { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+    .qr-btn {
+      background:var(--white-warm); color:var(--ink);
+      border:1.5px solid rgba(196,96,42,.25); border-radius:24px;
+      padding:9px 18px; font-family:var(--font-body); font-size:.84rem;
+      cursor:pointer; transition:all .2s ease; box-shadow:0 2px 6px var(--shadow);
+    }
+    .qr-btn:hover { background:var(--terracotta); color:#fff; border-color:var(--terracotta); transform:translateY(-1px); box-shadow:0 4px 14px rgba(196,96,42,.3); }
+
+    /* Restart */
+    .restart-row { text-align:center; margin-top:12px; animation:fadeUp .7s .4s ease both; }
+    .restart-btn {
+      background:transparent; border:1px solid rgba(196,96,42,.25); color:var(--ink-soft);
+      font-family:var(--font-body); font-size:.78rem; letter-spacing:.05em;
+      padding:6px 18px; border-radius:20px; cursor:pointer; transition:all .2s;
+    }
+    .restart-btn:hover { border-color:var(--terracotta); color:var(--terracotta); background:rgba(196,96,42,.05); }
+
+    /* Animations */
+    @keyframes fadeDown  { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:none} }
+    @keyframes fadeUp    { from{opacity:0;transform:translateY(14px)}  to{opacity:1;transform:none} }
+    @keyframes popIn     { from{opacity:0;transform:scale(.88) translateY(6px)} to{opacity:1;transform:none} }
+    @keyframes typingBounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+    @media(max-width:480px){
+      .app-wrapper{padding:16px 10px 24px;}
+      .chat-window{max-height:54vh; padding:16px 14px;}
+      .bubble{font-size:.87rem;}
+      .qr-btn{font-size:.8rem; padding:8px 14px;}
+      .app-title{font-size:1.8rem;}
+      .food-cols{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-layer">
+  <div class="mandala m1"></div>
+  <div class="mandala m2"></div>
+  <div class="grain"></div>
+</div>
+
+<div class="app-wrapper">
+  <header class="app-header">
+    <div class="header-symbol">☽ ✦ ☾</div>
+    <h1 class="app-title">Āyurveda <em>Wellness</em></h1>
+    <p class="app-subtitle">Discover your Prakriti — your unique mind-body constitution</p>
+    <span class="free-badge">✓ 100% Free · No sign-up · No API key</span>
+  </header>
+
+  <div class="dosha-legend">
+    <span class="dosha-badge vata">🌬 Vata</span>
+    <span class="dosha-divider">·</span>
+    <span class="dosha-badge pitta">🔥 Pitta</span>
+    <span class="dosha-divider">·</span>
+    <span class="dosha-badge kapha">🌿 Kapha</span>
+  </div>
+
+  <div class="chat-window" id="chatWindow"></div>
+
+  <div class="input-area">
+    <div class="quick-replies" id="quickReplies"></div>
+  </div>
+
+  <div class="restart-row">
+    <button class="restart-btn" onclick="restartAssessment()">↺ Restart Assessment</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  ĀYURVEDA WELLNESS — FULLY OFFLINE, NO API KEY NEEDED
+// ════════════════════════════════════════════════════════════
+
+// ── QUESTIONNAIRE ────────────────────────────────────────────
+const QUESTIONS = [
+  {
+    question: "How would you describe your body frame?",
+    options: [
+      { label: "🌬 Thin, light, hard to gain weight",        scores: { vata:3 } },
+      { label: "🔥 Medium, muscular, well-proportioned",     scores: { pitta:3 } },
+      { label: "🌿 Broad, heavy-set, gains weight easily",   scores: { kapha:3 } },
+    ]
+  },
+  {
+    question: "What best describes your skin?",
+    options: [
+      { label: "🌬 Dry, rough, or prone to cracking",               scores: { vata:3 } },
+      { label: "🔥 Warm, oily, sensitive — prone to rashes or acne",scores: { pitta:3 } },
+      { label: "🌿 Thick, moist, smooth, and cool to touch",        scores: { kapha:3 } },
+    ]
+  },
+  {
+    question: "How is your digestion and appetite?",
+    options: [
+      { label: "🌬 Irregular — sometimes hungry, sometimes not",  scores: { vata:3 } },
+      { label: "🔥 Strong and consistent — I must eat on time",   scores: { pitta:3 } },
+      { label: "🌿 Slow but steady — I can skip meals easily",    scores: { kapha:3 } },
+    ]
+  },
+  {
+    question: "How would you describe your sleep?",
+    options: [
+      { label: "🌬 Light sleeper, wake often, vivid dreams",  scores: { vata:3 } },
+      { label: "🔥 Moderate, wake up sharp and alert",        scores: { pitta:3 } },
+      { label: "🌿 Deep, heavy sleeper — hard to get up",     scores: { kapha:3 } },
+    ]
+  },
+  {
+    question: "What describes your energy through the day?",
+    options: [
+      { label: "🌬 Bursts of energy followed by fatigue",     scores: { vata:3 } },
+      { label: "🔥 Sustained, focused, intense energy",       scores: { pitta:3 } },
+      { label: "🌿 Slow to start but steady all day",         scores: { kapha:3 } },
+    ]
+  },
+  {
+    question: "How would you describe your thinking style?",
+    options: [
+      { label: "🌬 Quick, creative, easily distracted",       scores: { vata:3 } },
+      { label: "🔥 Sharp, analytical, goal-oriented",         scores: { pitta:3 } },
+      { label: "🌿 Calm, methodical, excellent memory",       scores: { kapha:3 } },
+    ]
+  },
+  {
+    question: "When stressed, what do you most feel?",
+    options: [
+      { label: "🌬 Anxiety, worry, fear, restlessness",          scores: { vata:3 } },
+      { label: "🔥 Irritability, anger, frustration",            scores: { pitta:3 } },
+      { label: "🌿 Withdrawal, sadness, or stubbornness",        scores: { kapha:3 } },
+    ]
+  },
+  {
+    question: "What temperature do you prefer?",
+    options: [
+      { label: "🌬 Love warmth, dislike cold and wind",       scores: { vata:3 } },
+      { label: "🔥 Prefer cool, dislike heat and sun",        scores: { pitta:3 } },
+      { label: "🌿 Like warm and dry, dislike cold and damp", scores: { kapha:3 } },
+    ]
+  },
+];
+
+// ── DOSHA DATABASE ────────────────────────────────────────────
+const DOSHA = {
+  vata: {
+    name:"Vata", emoji:"🌬", color:"vata",
+    tagline:"Air & Ether · Movement · Creativity · Change",
+    description:"Vata types are lively, creative, and enthusiastic — natural visionaries who thrive on change. When out of balance, anxiety, dryness, and irregular habits tend to appear.",
+    eat:[
+      "Warm, oily, nourishing foods — ghee, sesame oil, avocado",
+      "Sweet fruits — bananas, mangoes, dates, figs, peaches",
+      "Root vegetables — carrots, beets, sweet potato, squash",
+      "Warm cooked grains — rice, oats, wheat, quinoa",
+      "Warming herbal teas — ginger, licorice, cinnamon, cardamom",
+      "Dairy — warm milk, butter, soft cheeses (room temperature)",
+      "Nuts and seeds — almonds, walnuts, sesame (soaked is best)",
+    ],
+    avoid:[
+      "Raw and cold foods — salads, cold drinks, ice cream, smoothies",
+      "Dry foods — crackers, popcorn, rice cakes, dried fruits",
+      "Astringent raw vegetables — broccoli, cauliflower, raw beans",
+      "Caffeine, alcohol, and stimulants",
+      "Skipping meals or eating at irregular times",
+      "Frozen, leftover, or processed foods",
+    ],
+    lifestyle:[
+      "Keep a consistent daily routine — same wake, eat, and sleep times",
+      "Gentle, grounding exercise — yoga, tai chi, walking in nature, swimming",
+      "Abhyanga — warm sesame oil self-massage for 10 min before shower",
+      "Sleep before 10 PM; wake around 6–7 AM with the sun",
+      "Daily meditation or slow deep-breathing for 10–15 minutes",
+      "Limit multitasking, excessive travel, and screen overload",
+      "Stay warm — wear layers, protect yourself from cold wind",
+      "Sip warm water or herbal tea throughout the day",
+    ],
+    tips:[
+      "Eat your largest meal at noon when digestive fire (Agni) is strongest",
+      "A warm sesame oil foot massage before bed dramatically improves sleep quality",
+      "Gratitude journaling for 5 minutes each morning calms an anxious Vata mind",
+      "Keep a regular meal schedule — nothing unsettles Vata like skipping meals",
+      "Warm baths with a few drops of lavender or sandalwood oil are deeply grounding",
+    ],
+    herbs:[
+      "Ashwagandha — strengthens and calms the nervous system",
+      "Triphala — gentle daily digestive tonic and detoxifier",
+      "Shatavari — nourishing and deeply moisturizing",
+      "Brahmi — calms anxious thoughts and sharpens memory",
+      "Licorice root — soothing for digestion and throat",
+    ],
+    yoga:[
+      "Sun Salutation (Surya Namaskar) — slow and mindful pace",
+      "Warrior poses (Virabhadrasana) — grounding and stabilizing",
+      "Child's Pose (Balasana) — deeply calming for Vata",
+      "Forward folds — settle and slow an overactive mind",
+      "Pranayama: Nadi Shodhana (alternate nostril) — balances nervous system",
+    ],
+    faqs:[
+      {
+        q:"Why does Vata get anxious and how to manage it?",
+        a:"Vata governs movement and the nervous system. When elevated, it manifests as restlessness, racing thoughts, and anxiety. Ground yourself through routine: eat at the same times daily, practice yoga or walking in nature, limit screens after dark, and apply warm oil to your feet before sleep. Ashwagandha is an excellent nervine tonic for Vata."
+      },
+      {
+        q:"What's the best morning routine for Vata?",
+        a:"Wake by 6–7 AM. Begin with a glass of warm water with lemon and ginger. Practice 10 minutes of gentle yoga or stretching, followed by self-massage with warm sesame oil (Abhyanga). Eat a warm, nourishing breakfast — oatmeal with ghee and cinnamon is ideal. Meditate for 5–10 minutes before starting work."
+      },
+      {
+        q:"Which seasons are hardest for Vata types?",
+        a:"Autumn and early winter (dry, cold, and windy) most aggravate Vata. During these seasons increase warm, oily foods, reduce raw foods, go to bed earlier, and stay warm. Avoid cold and windy environments as much as possible. Spring and summer are generally the most comfortable seasons for Vata."
+      },
+      {
+        q:"Can Vata types do intense exercise?",
+        a:"Intense exercise tends to aggravate Vata — it's drying, depleting, and can worsen anxiety and fatigue. Favor grounding, rhythmic movement instead: walking, yoga, tai chi, swimming, and gentle cycling. If you love vigorous workouts, limit them to 2–3 times per week and follow up with rest and nourishment."
+      },
+    ]
+  },
+
+  pitta: {
+    name:"Pitta", emoji:"🔥", color:"pitta",
+    tagline:"Fire & Water · Transformation · Ambition · Intelligence",
+    description:"Pitta types are sharp, driven, and courageous — natural leaders and problem-solvers. When out of balance, they may experience inflammation, anger, perfectionism, or burnout.",
+    eat:[
+      "Cool, refreshing foods — cucumber, coconut, mint, coriander",
+      "Sweet fruits — grapes, melon, pears, pomegranates, mangoes",
+      "Leafy greens and bitter vegetables — kale, spinach, zucchini, fennel",
+      "Cooling grains — basmati rice, barley, oats, wheat",
+      "Coconut water and cool herbal teas — fennel, rose, coriander, mint",
+      "Dairy — whole milk, ghee, unsalted butter (cooling and soothing)",
+      "Legumes — mung beans, lentils, chickpeas",
+    ],
+    avoid:[
+      "Hot, spicy, and fried foods — chili, cayenne, garlic in excess",
+      "Sour and fermented foods — vinegar, pickles, aged cheese, alcohol",
+      "Red meat and very heavy proteins",
+      "Excessive salt, soy sauce, and salty snacks",
+      "Skipping meals — Pitta gets intensely 'hangry'",
+      "Alcohol, coffee, and energy drinks",
+    ],
+    lifestyle:[
+      "Exercise in cooler parts of the day — early morning or evening",
+      "Moderate, enjoyable sports — swimming, cycling, walking, yoga, hiking",
+      "Avoid overheating — skip hot yoga, saunas, and midday sun exposure",
+      "Practice compassion, forgiveness, and releasing perfectionism",
+      "Take screen and work breaks every 60–90 minutes",
+      "Cultivate leisure, play, and activities with no goal or metric",
+      "Sleep 7–8 hours; avoid working or being on screens late at night",
+      "Spend time in nature near water — rivers, lakes, and the ocean are cooling",
+    ],
+    tips:[
+      "Rose water spritz or coconut oil on your face cools inflamed Pitta skin",
+      "Moon-gazing and nature walks in the evening ease an overworked Pitta mind",
+      "Practice 'cooling breath' (Sheetali pranayama) — inhale through a curled tongue, exhale through the nose",
+      "Eat on a reliable schedule — Pitta digestive fire needs regular fuel",
+      "Keep a gratitude practice to soften Pitta's tendency toward criticism",
+    ],
+    herbs:[
+      "Shatavari — deeply cooling and anti-inflammatory",
+      "Brahmi — calms Pitta's sharp, intense mind",
+      "Amalaki (Indian Gooseberry) — cooling liver tonic, rich in Vitamin C",
+      "Neem — purifying and cooling for skin and blood",
+      "Rose — heart-opening, cooling, and calming for Pitta emotions",
+    ],
+    yoga:[
+      "Moon Salutation (Chandra Namaskar) — cooling counterpart to Sun Salutation",
+      "Seated forward folds — surrender and release tension",
+      "Supported backbends — open the heart without heating the body",
+      "Restorative yoga with props — deeply needed rest for driven Pittas",
+      "Pranayama: Sheetali (cooling breath) and Nadi Shodhana (balance)",
+    ],
+    faqs:[
+      {
+        q:"Why does Pitta get angry and how to cool down quickly?",
+        a:"Pitta's fire element governs metabolism and transformation — including emotional intensity. When inflamed, this manifests as irritability, criticism, or anger. Quick cooling techniques: splash cold water on your face and wrists, practice Sheetali breathing (inhale through a rolled tongue), drink coconut water, or take a short walk in nature. Long-term: practice daily gratitude and reduce spicy food, alcohol, and late-night screen use."
+      },
+      {
+        q:"What's the best morning routine for Pitta?",
+        a:"Wake early (5:30–6:30 AM) before the day's heat builds. Start with cool water and a few drops of rose water. Practice cooling yoga or a gentle walk. Eat a nourishing breakfast — avoid skipping meals. Pitta thrives on a structured, efficient morning that doesn't rush. Schedule creative or intense work in the morning when Pitta focus is sharpest, and rest or play in the afternoon."
+      },
+      {
+        q:"Which seasons aggravate Pitta most?",
+        a:"Summer's heat, humidity, and bright sun are the biggest Pitta aggravators. Prioritize cool foods, reduce spice and alcohol, stay in shade or air-conditioning during peak hours, and swim or take cool baths. Autumn is a natural relief for Pitta. Even in summer, maintain routine — irregularity inflames all doshas."
+      },
+      {
+        q:"How can Pitta avoid burnout?",
+        a:"Pitta's drive and perfectionism make burnout a real risk. Build structured rest into every day — not as a reward, but as medicine. Schedule non-productive time: walks, creative hobbies, time with friends. Practice saying no. Eat on time and get enough sleep. Brahmi and Shatavari support the nervous system under Pitta stress. The antidote to Pitta burnout is play without purpose."
+      },
+    ]
+  },
+
+  kapha: {
+    name:"Kapha", emoji:"🌿", color:"kapha",
+    tagline:"Earth & Water · Stability · Nurturing · Endurance",
+    description:"Kapha types are calm, loyal, and deeply loving — the glue that holds families and communities together. When out of balance, lethargy, attachment, weight gain, and congestion can arise.",
+    eat:[
+      "Light, warm, dry, and well-spiced foods",
+      "Pungent vegetables — onion, garlic, ginger, radish, mustard greens",
+      "Legumes — lentils, black beans, chickpeas, mung dal",
+      "Light grains — barley, millet, corn, rye, buckwheat",
+      "Hot herbal teas — ginger, black pepper, tulsi, turmeric, cloves",
+      "Honey — the one sweetener suited to Kapha (raw, not cooked)",
+      "Lean proteins — chicken, turkey, eggs, fish (in moderation)",
+    ],
+    avoid:[
+      "Heavy, oily, and fried foods of any kind",
+      "Dairy in excess — cheese, ice cream, heavy cream, yogurt",
+      "Sweets, refined sugars, pastries, and desserts",
+      "Cold and refrigerated foods and drinks",
+      "Overeating or emotional comfort eating",
+      "Wheat and heavy grains — bread, pasta, and pastries in excess",
+    ],
+    lifestyle:[
+      "Wake early (before 6 AM) — Kapha accumulates when you sleep past sunrise",
+      "Vigorous daily exercise — running, dancing, HIIT, hiking, aerobics",
+      "Dry brushing (Garshana) before your morning shower to stimulate circulation",
+      "Seek stimulation: new experiences, travel, learning, and variety",
+      "Declutter your home and workspace regularly",
+      "Socialize actively — Kapha thrives in community, not isolation",
+      "Avoid all daytime napping",
+      "Use warming spices in cooking daily — ginger, cumin, black pepper, mustard",
+    ],
+    tips:[
+      "Warm lemon-ginger water first thing each morning kickstarts Kapha digestion",
+      "A brisk 20-minute walk after each meal prevents sluggishness and weight gain",
+      "Surround yourself with bright, warm colors and uplifting, energetic music",
+      "Kapha benefits enormously from a committed morning exercise routine",
+      "Try a monthly fast or kitchari cleanse to clear Kapha accumulation",
+    ],
+    herbs:[
+      "Trikatu — blend of ginger, black pepper, long pepper; kindles digestive fire",
+      "Guggul — reduces Kapha, supports metabolism and joints",
+      "Triphala — daily detox and digestive regulator for Kapha",
+      "Tulsi (Holy Basil) — warming, drying, and uplifting for Kapha lungs and mood",
+      "Punarnava — reduces water retention and Kapha congestion",
+    ],
+    yoga:[
+      "Sun Salutation (Surya Namaskar) — vigorous, repeated rounds to build heat",
+      "Standing poses — Warrior, Triangle, Chair — build strength and fire",
+      "Backbends — open the chest and counter Kapha heaviness",
+      "Inversions — stimulate circulation and lymphatic system",
+      "Pranayama: Kapalabhati (breath of fire) — most important for Kapha",
+    ],
+    faqs:[
+      {
+        q:"Why does Kapha feel sluggish in the morning?",
+        a:"Kapha is heaviest in the hours between 6–10 AM — the Kapha time of day. Sleeping through or past sunrise dramatically increases this heaviness. The solution: wake before 6 AM, drink warm lemon-ginger water immediately, and do at least 20 minutes of vigorous movement before breakfast. Never skip morning exercise on days you feel heaviest — that's precisely when you need it most."
+      },
+      {
+        q:"What's the best morning routine for Kapha?",
+        a:"Rise before 6 AM — ideally 5:30. Drink warm water with fresh ginger and lemon. Do Kapalabhati pranayama (breath of fire) for 5 minutes, then vigorous yoga or a run. Dry brush your skin before a warm (not hot) shower. Eat a light, spiced breakfast — avoid heavy foods or skipping and overeating later. Your morning energy sets the tone for your entire day."
+      },
+      {
+        q:"How can Kapha types lose weight sustainably?",
+        a:"Kapha weight is stubborn but responsive to consistency. Eat only when genuinely hungry, avoid snacking, and finish eating by sunset. Favor light, spiced, warm foods and reduce dairy, sweets, and wheat dramatically. Exercise vigorously for at least 30–45 minutes daily — Kapha needs intensity. Drink ginger tea throughout the day. Trikatu and Guggul are powerful Ayurvedic herbs for Kapha metabolism. Consistency over weeks and months creates lasting change."
+      },
+      {
+        q:"Which seasons are best and worst for Kapha?",
+        a:"Late winter and spring (damp, cold, heavy) are the most aggravating seasons for Kapha — this is when colds, congestion, and low mood are most likely. During these months: eat lighter, exercise more, use warming spices aggressively, and detox with kitchari or a spring cleanse. Summer's warmth and dryness is Kapha's best friend. Autumn is neutral to slightly challenging."
+      },
+    ]
+  }
+};
+
+// ── STATE ─────────────────────────────────────────────────────
+let state = {
+  phase: "welcome",
+  currentQuestion: 0,
+  scores: { vata:0, pitta:0, kapha:0 },
+  dominantDosha: null,
+};
+
+// ── DOM ───────────────────────────────────────────────────────
+const chatWindow   = document.getElementById("chatWindow");
+const quickReplies = document.getElementById("quickReplies");
+
+// ── BOOT ──────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", showWelcome);
+
+// ── WELCOME ───────────────────────────────────────────────────
+function showWelcome() {
+  clearInput();
+  botMsg(
+    `🙏 Namaste! Welcome to your <strong>Āyurvedic Prakriti Assessment</strong>.<br><br>` +
+    `Prakriti is your unique mind-body constitution determined at birth. Knowing your dominant dosha helps you make smarter choices around ` +
+    `<strong>diet, exercise, sleep, herbs, and daily routine</strong> — completely personalized to you.<br><br>` +
+    `I'll ask you <strong>8 quick questions</strong>. Answer based on your <em>lifelong tendencies</em>, not just how you feel today.`
+  );
+  setTimeout(() => {
+    setReplies([{ label:"✨ Begin My Assessment", fn: startQuiz }]);
+  }, 600);
+}
+
+// ── QUIZ ──────────────────────────────────────────────────────
+function startQuiz() {
+  state.phase = "quiz";
+  state.currentQuestion = 0;
+  state.scores = { vata:0, pitta:0, kapha:0 };
+  userMsg("✨ Begin My Assessment");
+  clearInput();
+  setTimeout(askQ, 700);
+}
+
+function askQ() {
+  const q = QUESTIONS[state.currentQuestion];
+  const prog = `<span style="font-size:.73rem;color:var(--ink-soft);opacity:.65">Question ${state.currentQuestion+1} of ${QUESTIONS.length}</span><br><br>`;
+  botMsg(prog + q.question);
+  setTimeout(() => {
+    setReplies(q.options.map(o => ({ label: o.label, fn: () => answer(o) })));
+  }, 350);
+}
+
+function answer(opt) {
+  userMsg(opt.label);
+  clearInput();
+  for (const [d,p] of Object.entries(opt.scores)) state.scores[d] += p;
+  state.currentQuestion++;
+  if (state.currentQuestion < QUESTIONS.length) {
+    setTimeout(askQ, 650);
+  } else {
+    typing(900, showResult);
+  }
+}
+
+// ── RESULT ────────────────────────────────────────────────────
+function showResult() {
+  const { vata, pitta, kapha } = state.scores;
+  const total = vata + pitta + kapha;
+  const ranked = Object.entries(state.scores).sort((a,b)=>b[1]-a[1]);
+  const dominant = ranked[0][0];
+  state.dominantDosha = dominant;
+  const D = DOSHA[dominant];
+
+  const vPct = Math.round((vata/total)*100);
+  const pPct = Math.round((pitta/total)*100);
+  const kPct = Math.round((kapha/total)*100);
+
+  // Secondary dosha note
+  const second = ranked[1][0];
+  const secondPct = Math.round((state.scores[second]/total)*100);
+  const secondNote = secondPct >= 30
+    ? `<p style="font-size:.78rem;color:var(--ink-soft);margin-top:6px;opacity:.8">
+        You have a notable secondary <strong>${DOSHA[second].name}</strong> influence (${secondPct}%) — 
+        consider ${DOSHA[second].name} guidelines during its aggravation season.
+       </p>`
+    : "";
+
+  const card = `
+    <div class="result-card">
+      <div class="result-header">
+        <div style="font-size:2.2rem;margin-bottom:4px">${D.emoji}</div>
+        <div class="dosha-name ${D.color}">${D.name} Dominant</div>
+        <div class="dosha-tagline">${D.tagline}</div>
+        <p style="font-size:.82rem;color:var(--ink-soft);margin-top:10px;line-height:1.55">${D.description}</p>
+        ${secondNote}
+      </div>
+
+      <div class="score-bars">
+        <div class="score-row">
+          <span class="score-label">Vata</span>
+          <div class="score-track"><div class="score-fill vata" style="width:${vPct}%"></div></div>
+          <span class="score-pct">${vPct}%</span>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Pitta</span>
+          <div class="score-track"><div class="score-fill pitta" style="width:${pPct}%"></div></div>
+          <span class="score-pct">${pPct}%</span>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Kapha</span>
+          <div class="score-track"><div class="score-fill kapha" style="width:${kPct}%"></div></div>
+          <span class="score-pct">${kPct}%</span>
+        </div>
+      </div>
+
+      <div class="rec-section">
+        <div class="rec-title">🥗 Diet — What to Favour & Reduce</div>
+        <div class="food-cols">
+          <div>
+            <div class="food-col-title eat">✓ Eat More</div>
+            <ul class="rec-list">${D.eat.map(i=>`<li>${i}</li>`).join("")}</ul>
+          </div>
+          <div>
+            <div class="food-col-title avoid">✗ Eat Less</div>
+            <ul class="rec-list">${D.avoid.map(i=>`<li>${i}</li>`).join("")}</ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="rec-section">
+        <div class="rec-title">🌅 Daily Lifestyle Routine</div>
+        <ul class="rec-list">${D.lifestyle.map(i=>`<li>${i}</li>`).join("")}</ul>
+      </div>
+
+      <div class="rec-section">
+        <div class="rec-title">💡 Wellness Tips</div>
+        <ul class="rec-list">${D.tips.map(i=>`<li>${i}</li>`).join("")}</ul>
+      </div>
+
+      <div class="rec-section">
+        <div class="rec-title">🌿 Recommended Herbs</div>
+        <ul class="rec-list">${D.herbs.map(i=>`<li>${i}</li>`).join("")}</ul>
+      </div>
+
+      <div class="rec-section">
+        <div class="rec-title">🧘 Yoga & Pranayama</div>
+        <ul class="rec-list">${D.yoga.map(i=>`<li>${i}</li>`).join("")}</ul>
+      </div>
+
+      <div class="faq-section">
+        <div class="faq-title">🪷 Common Questions for ${D.name} Types</div>
+        <div class="faq-grid">
+          ${D.faqs.map((f,i) => `
+            <div class="faq-item" id="faq${i}">
+              <div class="faq-q" onclick="toggleFaq(${i})">
+                <span>${f.q}</span>
+                <span class="faq-arrow" id="arrow${i}">▾</span>
+              </div>
+              <div class="faq-a">${f.a}</div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    </div>`;
+
+  botMsg(card);
+
+  setTimeout(() => {
+    botMsg(
+      `Your personalized Prakriti report is complete! 🙏<br><br>` +
+      `Tap any question below to explore more about your <strong>${D.name}</strong> constitution:`
+    );
+    setTimeout(() => {
+      setReplies([
+        { label:`🌿 Best herbs for ${D.name}?`,    fn: () => showFaqAnswer(0) },
+        { label:`🌅 Morning routine?`,              fn: () => showFaqAnswer(1) },
+        { label:`🌦 Seasonal advice?`,              fn: () => showFaqAnswer(2) },
+        { label:`⚡ Energy & balance tips?`,        fn: () => showFaqAnswer(3) },
+      ]);
+      state.phase = "explore";
+    }, 600);
+  }, 800);
+}
+
+// ── EXPLORE PHASE: answer follow-ups from built-in FAQ ────────
+function showFaqAnswer(idx) {
+  const D = DOSHA[state.dominantDosha];
+  const faq = D.faqs[idx];
+  userMsg(faq.q);
+  clearInput();
+  typing(700, () => {
+    botMsg(`<strong>${faq.q}</strong><br><br>${faq.a}`);
+    setTimeout(() => {
+      setReplies([
+        { label:`🌿 Best herbs?`,             fn: () => showFaqAnswer(0) },
+        { label:`🌅 Morning routine?`,        fn: () => showFaqAnswer(1) },
+        { label:`🌦 Seasonal advice?`,        fn: () => showFaqAnswer(2) },
+        { label:`⚡ Balance & energy tips?`,  fn: () => showFaqAnswer(3) },
+        { label:`↺ Retake Assessment`,        fn: restartAssessment },
+      ]);
+    }, 400);
+  });
+}
+
+// ── FAQ ACCORDION (inside result card) ────────────────────────
+function toggleFaq(i) {
+  const item  = document.getElementById(`faq${i}`);
+  const isOpen = item.classList.contains("open");
+  // Close all
+  document.querySelectorAll(".faq-item").forEach(el => el.classList.remove("open"));
+  if (!isOpen) item.classList.add("open");
+}
+
+// ── RESTART ───────────────────────────────────────────────────
+function restartAssessment() {
+  state = { phase:"welcome", currentQuestion:0, scores:{vata:0,pitta:0,kapha:0}, dominantDosha:null };
+  chatWindow.innerHTML = "";
+  clearInput();
+  showWelcome();
+}
+
+// ── UI HELPERS ────────────────────────────────────────────────
+function botMsg(html) {
+  const el = document.createElement("div");
+  el.classList.add("message","bot");
+  el.innerHTML = `<div class="bot-avatar">🌿</div><div class="bubble">${html}</div>`;
+  chatWindow.appendChild(el);
+  scrollBottom();
+}
+
+function userMsg(text) {
+  const el = document.createElement("div");
+  el.classList.add("message","user");
+  el.innerHTML = `<div class="bubble">${esc(text)}</div>`;
+  chatWindow.appendChild(el);
+  scrollBottom();
+}
+
+function typing(delay, callback) {
+  const id = "t" + Date.now();
+  const el = document.createElement("div");
+  el.classList.add("message","bot");
+  el.id = id;
+  el.innerHTML = `<div class="bot-avatar">🌿</div><div class="bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+  chatWindow.appendChild(el);
+  scrollBottom();
+  setTimeout(() => {
+    document.getElementById(id)?.remove();
+    callback();
+  }, delay);
+}
+
+function setReplies(options) {
+  quickReplies.innerHTML = "";
+  options.forEach(o => {
+    const btn = document.createElement("button");
+    btn.className = "qr-btn";
+    btn.textContent = o.label;
+    btn.onclick = o.fn;
+    quickReplies.appendChild(btn);
+  });
+}
+
+function clearInput() { quickReplies.innerHTML = ""; }
+function scrollBottom() { chatWindow.scrollTop = chatWindow.scrollHeight; }
+function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+</script>
+</body>
+</html>
